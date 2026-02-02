@@ -1,2 +1,77 @@
 ---
 # tasks file for docker
+- name: 'install docker dependecies'
+  apt:
+    name: '{{ item }}'
+    state: 'present'
+  with_items:
+    - 'apt-transport-https'
+    - 'ca-certificates'
+
+- name: 'add docker repo apt key'
+  apt_key:
+    url: 'https://download.docker.com/linux/ubuntu/gpg'
+    id: '9DC858229FC7DD38854AE2D88D81803C0EBFCD88'
+    state: 'present'
+  register: 'add_repository_key'
+  ignore_errors: true
+
+- name: 'add Docker repository'
+  apt_repository:
+    repo: '{{ docker_apt_repository }}'
+    state: 'present'
+    update_cache: 'yes'
+
+- name: Install docker
+  package:
+    name: '{{ item }}'
+    state: latest
+  with_items:
+    - 'docker-ce'
+    - 'docker-ce-cli'
+    - 'containerd.io'
+
+- name: 'enable docker systemd service'
+  service:
+    name: 'docker'
+    state: 'started'
+    enabled: 'yes'
+
+- name: Test Docker with hello world example
+  shell: 'docker run hello-world'
+  register: hello_world_output
+
+- name: Show output of hello word example
+  debug:
+    msg: 'Container output: {{ hello_world_output.stdout }}'
+
+- name: Create docker group
+  group:
+    name: docker
+    state: present
+    system: yes
+
+- name: Add ansible to docker group
+  user:
+    name: ansible
+    groups: docker
+    append: yes
+
+- name: Add ansible to docker group
+  user:
+    name: ubuntu
+    groups: docker
+    append: yes     
+
+- name: Reboot server
+  shell: 'sleep 1 && reboot'
+  async: 1
+  poll: 0
+      
+#- name: 'add users to docker group'
+#  user:
+#    name: '{{ item }}'
+#    groups: 'docker'
+#    append: 'yes'
+#  with_items: '{{ docker_group_members }}'
+#  when: 'docker_group_members is defined'
