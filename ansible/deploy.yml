@@ -1,5 +1,5 @@
 ---
 - name: deploy docker
-  hosts: exporter 
+  hosts: exporter
   roles:
     - docker

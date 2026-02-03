@@ -50,19 +50,19 @@
   group:
     name: docker
     state: present
-    system: yes
+    system: true
 
 - name: Add ansible to docker group
   user:
     name: ansible
     groups: docker
-    append: yes
+    append: true
 
 - name: Add ansible to docker group
   user:
     name: ubuntu
     groups: docker
-    append: yes     
+    append: true
 
 - name: Reboot server
   shell: 'sleep 1 && reboot'
