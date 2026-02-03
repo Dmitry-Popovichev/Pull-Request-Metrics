@@ -23,6 +23,7 @@
     update_cache: 'yes'
 
 - name: Install docker
+  become: true
   package:
     name: '{{ item }}'
     state: latest
@@ -67,11 +68,3 @@
   shell: 'sleep 1 && reboot'
   async: 1
   poll: 0
-      
-#- name: 'add users to docker group'
-#  user:
-#    name: '{{ item }}'
-#    groups: 'docker'
-#    append: 'yes'
-#  with_items: '{{ docker_group_members }}'
-#  when: 'docker_group_members is defined'
