@@ -19,9 +19,3 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-
-  - package-ecosystem: "pnpm"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-  
