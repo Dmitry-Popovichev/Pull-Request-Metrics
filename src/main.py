@@ -1,7 +1,5 @@
 import math, sys
 
-# extra random space
-
 def very_long_function_name(variable_one, variable_two, variable_three, variable_four):
     # This is a messy list
     my_list = [1, 2, 3, 4, 5, 6, 7, 8, 9]
