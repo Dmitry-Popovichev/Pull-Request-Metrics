@@ -1,6 +1,5 @@
 ---
 - name: deploy docker
   hosts: exporter 
-  become: true
   roles:
     - docker
