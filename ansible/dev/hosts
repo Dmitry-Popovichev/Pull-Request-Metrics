@@ -6,7 +6,3 @@
 
 [grafana]
 172.16.115.137
-
-[hosts:vars]
-ansible_user=ubuntu
-#ansible_password=###
