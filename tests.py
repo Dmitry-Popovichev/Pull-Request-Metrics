@@ -1,5 +1,5 @@
 import math
-from your_filename import very_long_function_name
+from main.py import very_long_function_name
 
 
 def test_function_passes():
