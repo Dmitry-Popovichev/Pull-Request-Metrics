@@ -35,6 +35,6 @@ def retrieve_repo_names(token: str) -> list[str]:
 if __name__ == "__main__":
     token = os.getenv("GITHUB_TOKEN")
     if not token:
-        print("No token found in the environment")
+        raise RuntimeError("GITHUB_TOKEN environment variable not found.")
 
     retrieve_repo_names(token=token)

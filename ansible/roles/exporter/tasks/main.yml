@@ -10,13 +10,13 @@
     dest: /home/ubuntu/Pull-Request-Metrics/
 
 - name: Ensure Python3 and pip are installed
+  become: true
   ansible.builtin.apt:
     name:
       - python3
       - python-pip
       - python3-venv
     state: present
-  become: true
 
 - name: Create a Python virtual environment
   ansible.builtin.command: python3 -m venv /home/ubuntu/.venv
