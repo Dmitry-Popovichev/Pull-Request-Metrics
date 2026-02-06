@@ -1,22 +1,19 @@
-import math, sys
+from github import Github
+from github import Auth
+import os
 
+token = os.getenv("GITHUB_TOKEN")
 
-def very_long_function_name(variable_one, variable_two, variable_three, variable_four):
-    # This is a messy list
-    my_list = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+if not token:
+    print("No token found")
 
-    # This dictionary has inconsistent spacing
-    my_dict = {"key1": "value1", "key2": "value2", "key3": "value3"}
+auth = Auth.Token(token)
 
-    # Poorly formatted math and long strings
-    result = (variable_one + variable_two + variable_three + variable_four) * math.pi
-    print(
-        "This is a very long string that should probably be broken up into multiple lines if it exceeds the line length limit of eighty-eight characters"
-    )
+g = Github(auth=auth)
 
-    return result
+g = Github(base_url="https://github.com/stfc/cloud-image-builders/api/v3", auth=auth)
 
+for repo in g.get_user().get_repos():
+    print(repo.name)
 
-if __name__ == "__main__":
-    # Inconsistent indentation and extra whitespace
-    print(very_long_function_name(1, 2, 3, 4))
+g.close()
