@@ -52,7 +52,9 @@
     mode: '0600'
 
 - name: Run the Python script
-  ansible.builtin.command: /home/ubuntu/.venv/bin/python /home/ubuntu/Pull-Request-Metrics/src/main.py
+  ansible.builtin.command: >
+    /home/ubuntu/.venv/bin/python
+    /home/ubuntu/Pull-Request-Metrics/src/main.py
   environment:
     GITHUB_TOKEN: "{{ github_token }}"
   register: script_output
