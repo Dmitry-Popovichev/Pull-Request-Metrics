@@ -26,9 +26,9 @@ def retrieve_repo_names(token: str) -> list[str]:
 
     for repo in g.get_user().get_repos():
         repo_list.append(repo.name)
-        # print(f"The repo name is: {repo.name}\n")
 
     g.close()
+    print(repo_list)  # for development purposes
     return repo_list
 
 

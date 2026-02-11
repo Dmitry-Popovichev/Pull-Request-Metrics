@@ -8,6 +8,8 @@
   ansible.builtin.git:
     repo: 'https://github.com/Dmitry-Popovichev/Pull-Request-Metrics.git'
     dest: /home/ubuntu/Pull-Request-Metrics/
+    version: main
+    force: true
 
 - name: Ensure Python3 and pip are installed
   become: true
@@ -33,12 +35,6 @@
     system: true
     shell: /sbin/nologin
 
-- name: Clone Pull Request Metrics Repo in /opt/
-  become: true
-  ansible.builtin.git:
-    repo: 'https://github.com/Dmitry-Popovichev/Pull-Request-Metrics.git'
-    dest: /opt/exporter
-
 - name: Load in variable files
   ansible.builtin.include_vars: "{{ vars_file }}"
 
@@ -58,3 +54,7 @@
   environment:
     GITHUB_TOKEN: "{{ github_token }}"
   register: script_output
+
+- name: Print script output to console
+  debug:
+    msg: "{{ script_output.stdout_lines }}"
