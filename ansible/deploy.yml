@@ -1,5 +1,7 @@
 ---
-- name: deploy docker
+- name: Deploy Pull Request Metric Stack
   hosts: exporter
+
   roles:
     - docker
+    - {"role": exporter, "vars_file": "./secrets.yml"}

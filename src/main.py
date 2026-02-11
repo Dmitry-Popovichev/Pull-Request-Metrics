@@ -1,22 +1,40 @@
-import math, sys
+#!/usr/bin/python3
+
+"""
+This script pulls GitHub Pull Request metrics from STFC Cloud repositories.
+#NOTE# At the moment it's a placeholder script with some basic code
+to test ansible playbooks.
+"""
+
+from github import Github
+from github import Auth
+import os
 
 
-def very_long_function_name(variable_one, variable_two, variable_three, variable_four):
-    # This is a messy list
-    my_list = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+def retrieve_repo_names(token: str) -> list[str]:
+    """
+    A simple function that retrieves all GitHub repositiores assocaited with the user,
+    using a personal GH token.
+    :param token: a string containing a github token
+    :return: A list of STFC Cloud repositories associated with the User token
+    :rtype: List
+    """
+    auth = Auth.Token(token)
 
-    # This dictionary has inconsistent spacing
-    my_dict = {"key1": "value1", "key2": "value2", "key3": "value3"}
+    g = Github(auth=auth)
+    repo_list = []
 
-    # Poorly formatted math and long strings
-    result = (variable_one + variable_two + variable_three + variable_four) * math.pi
-    print(
-        "This is a very long string that should probably be broken up into multiple lines if it exceeds the line length limit of eighty-eight characters"
-    )
+    for repo in g.get_user().get_repos():
+        repo_list.append(repo.name)
 
-    return result
+    g.close()
+    print(repo_list)  # for development purposes
+    return repo_list
 
 
 if __name__ == "__main__":
-    # Inconsistent indentation and extra whitespace
-    print(very_long_function_name(1, 2, 3, 4))
+    token = os.getenv("GITHUB_TOKEN")
+    if not token:
+        raise RuntimeError("GITHUB_TOKEN environment variable not found.")
+
+    retrieve_repo_names(token=token)
