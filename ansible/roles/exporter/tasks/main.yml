@@ -20,14 +20,6 @@
       - python3-venv
     state: present
 
-- name: Create a Python virtual environment
-  ansible.builtin.command: python3 -m venv /home/ubuntu/.venv
-
-- name: Install dependencies in the virtual environment
-  ansible.builtin.pip:
-    requirements: /home/ubuntu/Pull-Request-Metrics/requirements.txt
-    virtualenv: /home/ubuntu/.venv
-
 - name: Create exporter system user
   become: true
   ansible.builtin.user:
@@ -47,14 +39,27 @@
     group: exporter_user
     mode: '0600'
 
-- name: Run the Python script
-  ansible.builtin.command: >
-    /home/ubuntu/.venv/bin/python
-    /home/ubuntu/Pull-Request-Metrics/src/main.py
-  environment:
-    GITHUB_TOKEN: "{{ github_token }}"
-  register: script_output
+- name: Build the Docker image for the exporter
+  community.docker.docker_image:
+    name: exporter_app
+    state: present
+    build:
+      path: /home/ubuntu/Pull-Request-Metrics/src/
+    source: build
 
-- name: Print script output to console
-  debug:
-    msg: "{{ script_output.stdout_lines }}"
+- name: Run the Python script in Docker
+  community.docker.docker_container:
+    name: pr_metrics_exporter
+    image: exporter_app:latest
+    state: present
+    restart_policy: false
+    env:
+      GITHUB_TOKEN: "{{ github_token }}"
+
+- name: Schedule script to run twice daily at 9am and 4pm, Mon-Fri
+  ansible.builtin.cron:
+    name: pr_metrics_exporter_cron
+    weekday: MON-FRI
+    hour: "9,16"
+    minute: "0"
+    job: "docker start pr_metrics_exporter"
