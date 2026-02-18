@@ -15,4 +15,15 @@ jobs:
         with:
           lint-path: src
           python-version: 3.11
-          badge: ${{ github.ref == 'refs/heads/main' }}
+        if: github.event_name == 'pull_request'
+
+      - uses: Silleellie/pylint-github-action@v2.1
+        with:
+          lint-path: src
+          python-version: 3.11
+          badge-text: pylint
+          color-bad-score: red
+          color-ok-score: orange
+          color-good-score: yellowgreen
+          color-perfect-score: green
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
