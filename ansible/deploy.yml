@@ -1,11 +1,7 @@
 ---
-- hosts: prometheus
-  roles:
-    - prometheus
-  tags:
-    - prom
+- name: Deploy Pull Request Metric Stack
+  hosts: exporter
 
-- hosts: exporter
   roles:
     - docker
     - {"role": exporter, "vars_file": "./secrets.yml"}
