@@ -46,6 +46,10 @@
   debug:
     msg: 'Container output: {{ hello_world_output.stdout }}'
 
+- name: Prune the hello world example and any unsused containers
+  community.docker.docker_prune:
+    containers: true
+
 - name: Create docker group
   group:
     name: docker
