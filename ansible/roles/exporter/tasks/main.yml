@@ -44,7 +44,7 @@
     name: exporter_app
     state: present
     build:
-      path: /home/ubuntu/Pull-Request-Metrics/src/
+      path: ../src
     source: build
 
 - name: Run the Python script in Docker
