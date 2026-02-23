@@ -1,11 +1,17 @@
 ---
+- hosts: exporter
+  roles:
+    - docker
+    - {"role": exporter, "vars_file": "./secrets.yml"}
+
 - hosts: prometheus
   roles:
     - prometheus
   tags:
     - prom
 
-- hosts: exporter
+- hosts: grafana
   roles:
-    - docker
-    - {"role": exporter, "vars_file": "./secrets.yml"}
+    - grafana
+  tags:
+    - grafana
