@@ -9,18 +9,21 @@ jobs:
   Pylint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - uses: Silleellie/pylint-github-action@v2.1
         with:
           lint-path: src
-          python-version: 3.11
+          python-version: "3.11"
         if: github.event_name == 'pull_request'
 
       - uses: Silleellie/pylint-github-action@v2.1
         with:
           lint-path: src
-          python-version: 3.11
+          python-version: "3.11"
           badge-text: pylint
           color-bad-score: red
           color-ok-score: orange
