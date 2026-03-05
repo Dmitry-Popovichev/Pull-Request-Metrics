@@ -8,21 +8,43 @@ them accordingly.
 """
 
 import os
+import logging
+import argparse
+import time
 from typing import List
 from github import Github, Auth, PullRequest, PaginatedList
 from github.PullRequest import PullRequest
 from github.PaginatedList import PaginatedList
+from prometheus_client import start_http_server, Gauge
 from vars import stfc_repositiories
+
+# Set up logging to allow for command based log level configuration
+parser = argparse.ArgumentParser(description="Set the logging level via command line")
+parser.add_argument(
+    "--log-level",
+    choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+    default="WARNING",
+    help="Set the logging level",
+)
+args = parser.parse_args()
+logging.basicConfig(level=getattr(logging, args.log_level))
+
+# Defining a Prometheus Gauge to track the total number of merged PRs per repository
+merged_pr_total = Gauge(
+    name="github_merged_prs_total",
+    documentation="Total number of merged pull requests",
+    labelnames=["repository"],
+)
 
 
 def retrieve_list_of_prs(token: str, repo: str) -> PaginatedList[PullRequest]:
     """
-    A function that retrieves a list of pull requests from the given repository
+    A function that retrieves a paginated list of pull requests from the given repository
     using the provided GitHub token.
 
-    :param token: A string containing a github token
-    :param repo: A string containing the name of the repository
-    :return: A list of pull requests from the given repository (github.PullRequest.PullRequest objects)
+    :param token: A string containing a github token.
+    :param repo: A string containing the name of the repository.
+    :return: A paginated list of pull requests from the given repository.
     """
 
     auth = Auth.Token(token)
@@ -35,6 +57,8 @@ def retrieve_list_of_prs(token: str, repo: str) -> PaginatedList[PullRequest]:
         raise RuntimeError(
             f"Error retrieving pull requests, either the repo name or the token is incorrect: {e}"
         )
+
+    print(f"Retrieved {type(list_of_prs)} pull requests from {repo}")
     return list_of_prs
 
 
@@ -43,34 +67,39 @@ def retrieve_all_merged_prs(
 ) -> List[PullRequest]:
     """
     A simple function that retrieves all pull requests from the given repository and creates a new
-    list, appending only the merged PRs. This turns the paginated list of PRs that is slow to iterate through
-    into a single list of merged PRs.
+    list, appending only the merged PRs. This turns the paginated list of PRs that is slow to
+    iterate through into a simple list of merged PRs.
 
-    :param list_of_prs: a paginated list of PRs (PaginatedList[PullRequest] objects)
-    :return: A list of merged PRs
+    :param list_of_prs: a paginated list of PRs.
+    :return: A list of merged PRs.
     """
 
     merged_prs = []
+    print("The exporter is collecting pull requests, please wait...")
 
     for pr in list_of_prs:
         if pr.merged:
             merged_prs.append(pr)
-            print(pr.number)  # Only here for testing purposes
+            logging.info(pr.number)
         else:
-            print(
-                "PR has none value for merged field"
-            )  # Only here for testing purposes
+            logging.debug("PR has none value for merged field")
 
-    print(f"Total merged PRs: {len(merged_prs)}")  # Only here for testing purposes
+    print(f"Total merged PRs: {len(merged_prs)}")
     return merged_prs
 
 
 if __name__ == "__main__":
     token = os.getenv("GITHUB_TOKEN")
-
     if not token:
         raise RuntimeError("GITHUB_TOKEN environment variable not found.")
 
-    for repo in stfc_repositiories:
-        list_of_prs = retrieve_list_of_prs(token=token, repo=repo)
-        retrieve_all_merged_prs(list_of_prs)
+    start_http_server(8000)
+
+    while True:
+
+        for repo in stfc_repositiories:
+            list_of_prs = retrieve_list_of_prs(token=token, repo=repo)
+            merged_prs_list = retrieve_all_merged_prs(list_of_prs)
+            merged_pr_total.labels(repository=repo).set(len(merged_prs_list))
+
+        time.sleep(86400)
