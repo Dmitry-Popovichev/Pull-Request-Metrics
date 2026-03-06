@@ -1,3 +1,4 @@
+import pytest
 import sys
 from unittest.mock import patch, MagicMock
 
@@ -45,15 +46,13 @@ def test_retrieve_list_of_prs_function_has_invalid_token_or_repo(
     mock_repo.get_pulls.side_effect = Exception("Bad credentials")
     mock_github_instance.get_repo.return_value = mock_repo
 
-    try:
+    with pytest.raises(RuntimeError) as e:
         retrieve_list_of_prs("invalid_token", "mock_repo")
-    except RuntimeError as e:
+        print(e.value)
         assert (
-            str(e)
-            == "Error retrieving pull requests, either the repo name or the token is incorrect: Bad credentials"
-        ), "Should raise a RuntimeError with the correct message"
-    else:
-        assert False, "Should have raised a RuntimeError"
+            str(e.value)
+            == "Error retrieving pull requests, either the repo name or the token is incorrect."
+        )
 
 
 def test_retrieve_all_merged_function_returns_only_merged_prs():

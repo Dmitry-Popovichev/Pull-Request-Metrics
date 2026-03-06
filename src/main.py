@@ -16,7 +16,7 @@ from github import Github, Auth, PullRequest, PaginatedList
 from github.PullRequest import PullRequest
 from github.PaginatedList import PaginatedList
 from prometheus_client import start_http_server, Gauge
-from vars import stfc_repositiories
+from src.vars import stfc_repositiories
 
 # Set up logging to allow for command based log level configuration
 parser = argparse.ArgumentParser(description="Set the logging level via command line")
@@ -56,9 +56,9 @@ def retrieve_list_of_prs(token: str, repo: str) -> PaginatedList[PullRequest]:
     except Exception as e:
         raise RuntimeError(
             f"Error retrieving pull requests, either the repo name or the token is incorrect: {e}"
-        )
+        ) from e
 
-    print(f"Retrieved {type(list_of_prs)} pull requests from {repo}")
+    logging.debug("Retrieved %s pull requests from %s", type(list_of_prs), repo)
     return list_of_prs
 
 
@@ -75,20 +75,25 @@ def retrieve_all_merged_prs(
     """
 
     merged_prs = []
-    print("The exporter is collecting pull requests, please wait...")
+    logging.info("The exporter is collecting pull requests, please wait...")
 
     for pr in list_of_prs:
         if pr.merged:
             merged_prs.append(pr)
-            logging.info(pr.number)
+            logging.debug(pr.number)
         else:
             logging.debug("PR has none value for merged field")
 
-    print(f"Total merged PRs: {len(merged_prs)}")
+    logging.info("Total merged PRs: %s", len(merged_prs))
     return merged_prs
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """
+    The main function of the script that retrieves the GitHub token from the environment,
+    starts the Prometheus HTTP server, and continuously retrieves pull request data from the
+    specified repositories. Lastly, it sleeps for an hour before repeating the process.
+    """
     token = os.getenv("GITHUB_TOKEN")
     if not token:
         raise RuntimeError("GITHUB_TOKEN environment variable not found.")
@@ -102,4 +107,8 @@ if __name__ == "__main__":
             merged_prs_list = retrieve_all_merged_prs(list_of_prs)
             merged_pr_total.labels(repository=repo).set(len(merged_prs_list))
 
-        time.sleep(86400)
+        time.sleep(3600)
+
+
+if __name__ == "__main__":
+    main()
