@@ -1,29 +1,78 @@
 import pytest
+import sys
 from unittest.mock import patch, MagicMock
 
-from src.main import retrieve_repo_names
+from src import vars as src_vars
+
+sys.modules.setdefault("vars", src_vars)
+
+from src.main import retrieve_list_of_prs
+from src.main import retrieve_all_merged_prs
 
 
 @patch("src.main.Auth")
 @patch("src.main.Github")
-def test_funtion_returns_list(mock_github, mock_auth):
+def test_retrieve_list_of_prs_function_returns_list(mock_github, _mock_auth):
     """
-    Test that retrieve_repo_names returns a list of strings.
+    Test that retrieve_list_of_prs returns a list of PR objects.
     """
 
-    mock_auth_instance = mock_auth.return_value
     mock_github_instance = mock_github.return_value
 
-    mock_user = MagicMock()
     mock_repo = MagicMock()
-    mock_repo.name = "coolest-repo-ever"
+    mock_pr = MagicMock()
+    mock_pr.merged = True
+    mock_repo.get_pulls.return_value = [mock_pr]
 
-    mock_github_instance.get_user.return_value = mock_user
-    mock_user.get_repos.return_value = [mock_repo]
+    mock_github_instance.get_repo.return_value = mock_repo
 
-    result = retrieve_repo_names("mock_token")
+    result = retrieve_list_of_prs("mock_token", "mock_repo")
 
     assert isinstance(result, list), "Should return a list"
-    assert len(result) == 1, "Should have exactly one repo name"
-    assert result[0] == "coolest-repo-ever", "The repo name should match our mock"
-    assert isinstance(result[0], str), "The items in the list should be strings"
+    assert len(result) == 1, "Should have exactly one PR"
+    assert result[0] == mock_pr, "The PR should match the mock"
+
+
+@patch("src.main.Auth")
+@patch("src.main.Github")
+def test_retrieve_list_of_prs_function_has_invalid_token_or_repo(
+    mock_github, _mock_auth
+):
+    """
+    Test that retrieve_list_of_prs raises an error if the token is invalid or the repo is incorrect.
+    """
+    mock_github_instance = mock_github.return_value
+    mock_repo = MagicMock()
+    mock_repo.get_pulls.side_effect = Exception("Bad credentials")
+    mock_github_instance.get_repo.return_value = mock_repo
+
+    with pytest.raises(RuntimeError) as e:
+        retrieve_list_of_prs("invalid_token", "mock_repo")
+        print(e.value)
+        assert (
+            str(e.value)
+            == "Error retrieving pull requests, either the repo name or the token is incorrect."
+        )
+
+
+def test_retrieve_all_merged_function_returns_only_merged_prs():
+    """
+    Test that retrieve_all_merged returns only merged PRs.
+    """
+
+    mock_pr1 = MagicMock()
+    mock_pr1.merged = True
+
+    mock_pr2 = MagicMock()
+    mock_pr2.merged = False
+
+    mock_pr3 = MagicMock()
+    mock_pr3.merged = None
+
+    list_of_prs = [mock_pr1, mock_pr2, mock_pr3]
+
+    result = retrieve_all_merged_prs(list_of_prs)
+
+    assert isinstance(result, list), "Should return a list"
+    assert len(result) == 1, "Should have exactly one merged PR"
+    assert result[0] == mock_pr1, "The merged PR should match the mock"
