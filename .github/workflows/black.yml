@@ -7,6 +7,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: rickstaa/action-black@v1
+      
+      # Use the official PSF action instead of the rickstaa one
+      - uses: psf/black@stable
         with:
-          black_args: ". --check"
+          options: "--check --verbose"
+          src: "."
+          # This forces the action to use the same version you just installed in WSL
+          version: "26.1.0"

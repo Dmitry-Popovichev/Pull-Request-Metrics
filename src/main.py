@@ -2,7 +2,7 @@
 
 """
 This script pulls GitHub Pull Request metrics from STFC Cloud repositories.
-It uses the PyGithub library to interact with the GitHub API, 
+It uses the PyGithub library to interact with the GitHub API,
 retrieving a list of pull requests from specified repositories and filters
 them accordingly.
 """

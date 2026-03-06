@@ -1,3 +1,4 @@
 PyGithub
 pytest
+pytest-cov
 prometheus_client
