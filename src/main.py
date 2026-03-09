@@ -16,7 +16,7 @@ from github import Github, Auth, PullRequest, PaginatedList
 from github.PullRequest import PullRequest
 from github.PaginatedList import PaginatedList
 from prometheus_client import start_http_server, Gauge
-from src.vars import stfc_repositiories
+from vars import stfc_repositiories
 
 # Set up logging to allow for command based log level configuration
 parser = argparse.ArgumentParser(description="Set the logging level via command line")
