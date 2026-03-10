@@ -1,2 +1,4 @@
 ---
-# ansible_user=ubuntu
+exporter_host: "172.16.115.229"
+exporter_port: "8081"
+
