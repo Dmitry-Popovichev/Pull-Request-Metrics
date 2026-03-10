@@ -43,6 +43,7 @@
   community.docker.docker_image:
     name: exporter_app
     state: present
+    force_source: true
     build:
       path: /home/ubuntu/Pull-Request-Metrics/src
     source: build
@@ -52,6 +53,9 @@
     name: pr_metrics_exporter
     image: exporter_app:latest
     state: started
+    recreate: true
+    ports:
+      - "8081:8081"
     restart_policy: always
     env:
       GITHUB_TOKEN: "{{ github_token }}"
