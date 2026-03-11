@@ -16,7 +16,7 @@ from github import Github, Auth, PullRequest, PaginatedList
 from github.PullRequest import PullRequest
 from github.PaginatedList import PaginatedList
 from prometheus_client import start_http_server, Gauge
-from src.vars import stfc_repositiories
+from vars import stfc_repositiories
 
 # Set up logging to allow for command based log level configuration
 parser = argparse.ArgumentParser(description="Set the logging level via command line")
@@ -27,7 +27,11 @@ parser.add_argument(
     help="Set the logging level",
 )
 args = parser.parse_args()
-logging.basicConfig(level=getattr(logging, args.log_level))
+logging.basicConfig(
+    format="%(asctime)s %(levelname)-8s %(message)s",
+    level=getattr(logging, args.log_level),
+    datefmt="%d-%m-%Y %H:%M:%S",
+)
 
 # Defining a Prometheus Gauge to track the total number of merged PRs per repository
 merged_pr_total = Gauge(
@@ -98,7 +102,7 @@ def main() -> None:
     if not token:
         raise RuntimeError("GITHUB_TOKEN environment variable not found.")
 
-    start_http_server(8000)
+    start_http_server(8081)
 
     while True:
 

@@ -3,6 +3,8 @@
   roles:
     - docker
     - {"role": exporter, "vars_file": "./secrets.yml"}
+  tags:
+    - exporter
 
 - hosts: prometheus
   roles:

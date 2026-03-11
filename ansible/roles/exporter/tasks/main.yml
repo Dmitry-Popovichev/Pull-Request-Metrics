@@ -7,7 +7,7 @@
   become: true
   ansible.builtin.git:
     repo: 'https://github.com/Dmitry-Popovichev/Pull-Request-Metrics.git'
-    dest: /home/ubuntu/Pull-Request-Metrics/
+    dest: ../Pull-Request-Metrics/
     version: main
     force: true
 
@@ -43,23 +43,19 @@
   community.docker.docker_image:
     name: exporter_app
     state: present
+    force_source: true
     build:
-      path: ../src
+      path: ../Pull-Request-Metrics/src
     source: build
 
 - name: Run the Python script in Docker
   community.docker.docker_container:
     name: pr_metrics_exporter
     image: exporter_app:latest
-    state: present
-    restart_policy: false
+    state: started
+    recreate: true
+    ports:
+      - "8081:8081"
+    restart_policy: always
     env:
       GITHUB_TOKEN: "{{ github_token }}"
-
-- name: Schedule script to run twice daily at 9am and 4pm, Mon-Fri
-  ansible.builtin.cron:
-    name: pr_metrics_exporter_cron
-    weekday: MON-FRI
-    hour: "9,16"
-    minute: "0"
-    job: "docker start pr_metrics_exporter"
