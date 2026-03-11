@@ -7,7 +7,7 @@
   become: true
   ansible.builtin.git:
     repo: 'https://github.com/Dmitry-Popovichev/Pull-Request-Metrics.git'
-    dest: /home/ubuntu/Pull-Request-Metrics/
+    dest: ../Pull-Request-Metrics/
     version: main
     force: true
 
@@ -45,7 +45,7 @@
     state: present
     force_source: true
     build:
-      path: /home/ubuntu/Pull-Request-Metrics/src
+      path: ../Pull-Request-Metrics/src
     source: build
 
 - name: Run the Python script in Docker
