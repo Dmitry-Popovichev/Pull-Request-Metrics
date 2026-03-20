@@ -40,6 +40,7 @@
     mode: '0600'
 
 - name: Build the Docker image for the exporter
+  become: true
   community.docker.docker_image:
     name: exporter_app
     state: present
@@ -49,6 +50,7 @@
     source: build
 
 - name: Run the Python script in Docker
+  become: true
   community.docker.docker_container:
     name: pr_metrics_exporter
     image: exporter_app:latest

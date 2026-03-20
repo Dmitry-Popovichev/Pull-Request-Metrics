@@ -28,10 +28,14 @@ sudo mkfs.ext4 /dev/<device_name>
 
 ### Step 3: Making the data directory and mounting the device
 
-Run the next command to make a directory in the `/mnt/` directory, where you want to store your data:
+Run the next command to make a directory in the `/mnt/` directory where you want to store your data and set the permissions to the prometheus user (very important):
 
 ```
 sudo mkdir /mnt/<name_of_data_dir>
+```
+
+```
+sudo chown -R prometheus:prometheus /mnt/<name_of_data_dir>
 ```
 
 Then mount your device to that directory:

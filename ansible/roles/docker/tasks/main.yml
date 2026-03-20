@@ -1,6 +1,7 @@
 ---
 # tasks file for docker
 - name: 'install docker dependecies'
+  become: true
   apt:
     name: '{{ item }}'
     state: 'present'
@@ -9,6 +10,7 @@
     - 'ca-certificates'
 
 - name: 'add docker repo apt key'
+  become: true
   apt_key:
     url: 'https://download.docker.com/linux/ubuntu/gpg'
     id: '9DC858229FC7DD38854AE2D88D81803C0EBFCD88'
@@ -17,6 +19,7 @@
   ignore_errors: true
 
 - name: 'add Docker repository'
+  become: true
   apt_repository:
     repo: '{{ docker_apt_repository }}'
     state: 'present'
@@ -33,12 +36,14 @@
     - 'containerd.io'
 
 - name: 'enable docker systemd service'
+  become: true
   service:
     name: 'docker'
     state: 'started'
     enabled: 'yes'
 
 - name: Test Docker with hello world example
+  become: true
   shell: 'docker run hello-world'
   register: hello_world_output
 
@@ -47,24 +52,21 @@
     msg: 'Container output: {{ hello_world_output.stdout }}'
 
 - name: Prune the hello world example and any unsused containers
+  become: true
   community.docker.docker_prune:
     containers: true
 
 - name: Create docker group
+  become: true
   group:
     name: docker
     state: present
     system: true
 
 - name: Add ansible to docker group
+  become: true
   user:
     name: ansible
-    groups: docker
-    append: true
-
-- name: Add ansible to docker group
-  user:
-    name: ubuntu
     groups: docker
     append: true
 
