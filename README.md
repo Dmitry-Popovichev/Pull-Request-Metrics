@@ -1,8 +1,70 @@
 # Pull-Request-Metrics
 
-![pylint](https://img.shields.io/badge/pylint-8.82-yellowgreen?logo=python&logoColor=white)
+![pylint](https://img.shields.io/badge/pylint-9.57-green?logo=python&logoColor=white)
 
 The Pull Request Metrics tool will be used to gather data around the team's pull requests in a selected group of repositories associated with the Cloud Team. This should give us insights to where we can improve our code reviews, which repositories need some extra care and attention, and improve efficiency.
+
+## Deployment
+
+Prerequisites (this will change soon):
+
+    1. Ubuntu l3.nano or l3.micro VM
+    2. Additional 3 Ubuntu VMs
+
+To start deploying the stack, you will need a Ubuntu VM (`l3.nano` or `l3.micro` will do) with Ansible and Ansible-Core installed. It is recommended to install the latest version as some modules in the `deploy.yml` playbook are not supported in older versions. As of writing this, the current versions were used and installed via pip:
+
+```
+pip install ansible==10.7.0
+
+pip install ansible-core==2.17.14
+```
+
+When SSHing onto the VM, make sure to add the `-A` flag to enable authentication agent forwarding, Ansible will need this to connect to the hosts. Next clone the Pull-Request-Metrics repo onto the VM, https://github.com/Dmitry-Popovichev/Pull-Request-Metrics.
+
+Using whatever terminal editor you have, edit the `hosts` file in either the dev or prod directories and specify the host IP for each group (exporter, Prometheus, Grafana), it will look something like this:
+
+```yaml
+---
+[prometheus]
+172.16.x.x1
+
+[exporter]
+172.16.x.x2
+
+[grafana]
+172.16.x.x3
+```
+
+By default, without specifying a hosts file when deploying, the deploy playbook will run the setup on the dev environment (using `ansible/dev/hosts`) as this avoids pushing the service straight into a production environment. You can change this by adding the following `-i path/to/the/production/hosts/file` to the deploy command in a later step or by changing the default hosts file in the `ansible.cfg` file.
+
+Additionally, you will need to edit the `../group_vars/all.yml` file and specify the exporter host IP. This file exists for both dev and prod, therefore make sure to change either or both files depending on where you are deploying to.
+
+'''yaml
+---
+exporter_host: "172.16.x.x"
+exporter_port: "8081"
+'''
+
+(In progress)
+
+A `secrets.yml` file is included in the repository, this contains the GitHub Personal Access Token (PAT) that is used to contact the GitHub API and pull the metrics. It is encrypted using Ansible Vault and therefore you will need to access the Keeper record with the password in order to run the deployment or update the PAT if it has expired.
+
+(End in progress)
+
+It is recommended to setup up the persistent storage on the Prometheus VM before running deployment to avoid errors and having to restart services. To do so follow the instruction on setting up storage in the section below.
+
+> Additional Note: make sure you have setup the security groups for each VM. By default Grafana is run on port 3000, Prometheus is run on port 9090 and port 8081 has been chosen for the exporter.
+
+Run deployment:
+
+```bash
+cd Pull-Request-Metrics/ansible
+
+# Run this with -v or -vvv to run it in verbose mode for troubleshooting
+ansible-playbook deploy.yml --ask-vault-password
+```
+
+The final step would be to set up your Grafana data sources and create some dashboards with metric visulisations.
 
 ## Persistent Storage Configuration
 
