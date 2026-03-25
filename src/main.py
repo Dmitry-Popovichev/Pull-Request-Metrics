@@ -99,7 +99,7 @@ def average_time_to_merge(merged_prs: List[PullRequest], repo: str) -> float:
     :param repo: A string containing the repository name.
     :return: Average time to merge float per repository in seconds
     """
-    
+
     skipped_prs = 0
     average_time_to_merge = 0
     time_to_merge_list = []
@@ -112,15 +112,23 @@ def average_time_to_merge(merged_prs: List[PullRequest], repo: str) -> float:
         if created_at is None or merged_at is None:
             skipped_prs += 1
             logging.warning(
-                "Skipping pr #%s in %s due to missing datestamps (created_at=%s, merged_at=%s)", pr_number, repo, created_at, merged_at
+                "Skipping pr #%s in %s due to missing datestamps (created_at=%s, merged_at=%s)",
+                pr_number,
+                repo,
+                created_at,
+                merged_at,
             )
         else:
-            try: 
+            try:
                 difference = merged_at - created_at
                 time_in_seconds = difference.total_seconds()
                 if time_in_seconds < 0:
                     skipped_prs += 1
-                    logging.error("Skipping pr #%s as it has produced a negative difference, %s seconds", pr_number, time_in_seconds)
+                    logging.error(
+                        "Skipping pr #%s as it has produced a negative difference, %s seconds",
+                        pr_number,
+                        time_in_seconds,
+                    )
                     continue
                 time_to_merge_list.append(time_in_seconds)
 
@@ -128,16 +136,19 @@ def average_time_to_merge(merged_prs: List[PullRequest], repo: str) -> float:
                 skipped_prs += 1
                 logging.error("Something went wront when calculating difference: %s", e)
 
-    
     if len(time_to_merge_list) == 0:
         logging.info("%s has 0 PRs", repo)
     else:
         average_time_to_merge = sum(time_to_merge_list) / len(time_to_merge_list)
-        logging.info("The average time to merge a PR in %s is %s seconds", repo, average_time_to_merge)
+        logging.info(
+            "The average time to merge a PR in %s is %s seconds",
+            repo,
+            average_time_to_merge,
+        )
         logging.info("Skipped PRs: %s", skipped_prs)
 
     return average_time_to_merge
-        
+
 
 def main() -> None:
     """
@@ -145,7 +156,9 @@ def main() -> None:
     starts the Prometheus HTTP server, and continuously retrieves pull request data from the
     specified repositories. Lastly, it sleeps for an hour before repeating the process.
     """
-    parser = argparse.ArgumentParser(description="Set the logging level via command line")
+    parser = argparse.ArgumentParser(
+        description="Set the logging level via command line"
+    )
     parser.add_argument(
         "--log",
         "--log-level",
@@ -171,10 +184,14 @@ def main() -> None:
             merged_prs_list = retrieve_all_merged_prs(list_of_prs)
 
             # Metric calculations
-            average_time_to_merge_pr_per_repo = average_time_to_merge(merged_prs_list, repo=repo)
+            average_time_to_merge_pr_per_repo = average_time_to_merge(
+                merged_prs_list, repo=repo
+            )
             print(f"TESTING: {average_time_to_merge_pr_per_repo}")
             # Prometheus gauge post to http server
-            average_time_to_merge_pr_gauge.labels(repository=repo).set(average_time_to_merge_pr_per_repo)
+            average_time_to_merge_pr_gauge.labels(repository=repo).set(
+                average_time_to_merge_pr_per_repo
+            )
             merged_pr_total_gauge.labels(repository=repo).set(len(merged_prs_list))
 
         # Sleep for 1 hour

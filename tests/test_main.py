@@ -86,8 +86,12 @@ def test_average_time_to_merge_returns_a_positive_float():
     mock_repo_name = "The best repo ever"
 
     mock_pr1 = MagicMock()
-    mock_pr1.created_at = datetime.strptime("2026-03-24 15:02:03+00:00", '%Y-%m-%d %H:%M:%S%z')
-    mock_pr1.merged_at = datetime.strptime("2026-03-24 15:08:30+00:00", '%Y-%m-%d %H:%M:%S%z')
+    mock_pr1.created_at = datetime.strptime(
+        "2026-03-24 15:02:03+00:00", "%Y-%m-%d %H:%M:%S%z"
+    )
+    mock_pr1.merged_at = datetime.strptime(
+        "2026-03-24 15:08:30+00:00", "%Y-%m-%d %H:%M:%S%z"
+    )
 
     list_of_prs = [mock_pr1]
 
@@ -97,12 +101,14 @@ def test_average_time_to_merge_returns_a_positive_float():
 
 
 def test_pr_datetime_has_None_value_and_skips_and_logs_warning(caplog):
-    
+
     mock_repo_name = "The best repo ever"
 
     mock_pr1 = MagicMock()
     mock_pr1.number = 1
-    mock_pr1.created_at = datetime.strptime("2026-03-24 15:02:03+00:00", '%Y-%m-%d %H:%M:%S%z')
+    mock_pr1.created_at = datetime.strptime(
+        "2026-03-24 15:02:03+00:00", "%Y-%m-%d %H:%M:%S%z"
+    )
     mock_pr1.merged_at = None
 
     list_of_prs = [mock_pr1]
@@ -111,8 +117,12 @@ def test_pr_datetime_has_None_value_and_skips_and_logs_warning(caplog):
         result = average_time_to_merge(list_of_prs, mock_repo_name)
 
     assert len(caplog.records) == 1, "There should be 1 record of a warning"
-    assert "Skipping pr #1 in The best repo ever due to missing datestamps (created_at=2026-03-24 15:02:03+00:00, merged_at=None)" in caplog.text
+    assert (
+        "Skipping pr #1 in The best repo ever due to missing datestamps (created_at=2026-03-24 15:02:03+00:00, merged_at=None)"
+        in caplog.text
+    )
     assert result == 0
+
 
 def test_if_difference_is_negative_then_function_should_log_an_error(caplog):
 
@@ -120,8 +130,12 @@ def test_if_difference_is_negative_then_function_should_log_an_error(caplog):
 
     mock_pr1 = MagicMock()
     mock_pr1.number = 1
-    mock_pr1.created_at = datetime.strptime("2026-03-24 15:08:30+00:00", '%Y-%m-%d %H:%M:%S%z')
-    mock_pr1.merged_at = datetime.strptime("2026-03-24 15:02:03+00:00", '%Y-%m-%d %H:%M:%S%z')
+    mock_pr1.created_at = datetime.strptime(
+        "2026-03-24 15:08:30+00:00", "%Y-%m-%d %H:%M:%S%z"
+    )
+    mock_pr1.merged_at = datetime.strptime(
+        "2026-03-24 15:02:03+00:00", "%Y-%m-%d %H:%M:%S%z"
+    )
 
     list_of_prs = [mock_pr1]
 
@@ -129,18 +143,25 @@ def test_if_difference_is_negative_then_function_should_log_an_error(caplog):
         result = average_time_to_merge(list_of_prs, mock_repo_name)
 
     assert len(caplog.records) == 1, "There should be 1 record of an error"
-    assert "Skipping pr #1 as it has produced a negative difference, -387.0 seconds" in caplog.text
+    assert (
+        "Skipping pr #1 as it has produced a negative difference, -387.0 seconds"
+        in caplog.text
+    )
     assert result == 0
 
 
-def test_when_datetime_has_missing_timezone_and_exception_is_thrown_with_error_logging(caplog):
+def test_when_datetime_has_missing_timezone_and_exception_is_thrown_with_error_logging(
+    caplog,
+):
 
     mock_repo_name = "The best repo ever"
 
     mock_pr1 = MagicMock()
     mock_pr1.number = 1
-    mock_pr1.created_at = datetime.strptime("2026-03-24 15:02:03+00:00", '%Y-%m-%d %H:%M:%S%z')
-    mock_pr1.merged_at = datetime.strptime("2026-03-24 15:08:30", '%Y-%m-%d %H:%M:%S')
+    mock_pr1.created_at = datetime.strptime(
+        "2026-03-24 15:02:03+00:00", "%Y-%m-%d %H:%M:%S%z"
+    )
+    mock_pr1.merged_at = datetime.strptime("2026-03-24 15:08:30", "%Y-%m-%d %H:%M:%S")
 
     list_of_prs = [mock_pr1]
 
