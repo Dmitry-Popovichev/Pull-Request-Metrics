@@ -14,4 +14,4 @@ jobs:
           options: "--check --verbose"
           src: "."
           # This forces the action to use the same version you just installed in WSL
-          version: "26.1.0"
+          version: "26.3.1"

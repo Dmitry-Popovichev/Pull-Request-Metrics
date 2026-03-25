@@ -18,25 +18,23 @@ from github.PaginatedList import PaginatedList
 from prometheus_client import start_http_server, Gauge
 from vars import stfc_repositiories
 
-# Set up logging to allow for command based log level configuration
-parser = argparse.ArgumentParser(description="Set the logging level via command line")
-parser.add_argument(
-    "--log-level",
-    choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-    default="WARNING",
-    help="Set the logging level",
-)
-args = parser.parse_args()
+# Configure a safe default; CLI overrides are applied in main().
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",
-    level=getattr(logging, args.log_level),
+    level=logging.WARNING,
     datefmt="%d-%m-%Y %H:%M:%S",
 )
 
 # Defining a Prometheus Gauge to track the total number of merged PRs per repository
-merged_pr_total = Gauge(
+merged_pr_total_gauge = Gauge(
     name="github_merged_prs_total",
     documentation="Total number of merged pull requests",
+    labelnames=["repository"],
+)
+# Defining a Prometheus Gauge to track the average time to merge PRs within a repository
+average_time_to_merge_pr_gauge = Gauge(
+    name="average_time_to_merge_pr",
+    documentation="The average time to merge a pull request from creation",
     labelnames=["repository"],
 )
 
@@ -92,12 +90,86 @@ def retrieve_all_merged_prs(
     return merged_prs
 
 
+def average_time_to_merge(merged_prs: List[PullRequest], repo: str) -> float:
+    """
+    This function uses the merged_prs list and calculates the average time from PR creation to
+    merge using the simple list generated earlier.
+
+    :param merged_prs: A list of merged PRs.
+    :param repo: A string containing the repository name.
+    :return: Average time to merge float per repository in seconds
+    """
+
+    skipped_prs = 0
+    average_time_to_merge = 0
+    time_to_merge_list = []
+
+    for pr in merged_prs:
+        pr_number = getattr(pr, "number", "unknown")
+        created_at = getattr(pr, "created_at", None)
+        merged_at = getattr(pr, "merged_at", None)
+
+        if created_at is None or merged_at is None:
+            skipped_prs += 1
+            logging.warning(
+                "Skipping pr #%s in %s due to missing datestamps (created_at=%s, merged_at=%s)",
+                pr_number,
+                repo,
+                created_at,
+                merged_at,
+            )
+        else:
+            try:
+                difference = merged_at - created_at
+                time_in_seconds = difference.total_seconds()
+                if time_in_seconds < 0:
+                    skipped_prs += 1
+                    logging.error(
+                        "Skipping pr #%s as it has produced a negative difference, %s seconds",
+                        pr_number,
+                        time_in_seconds,
+                    )
+                    continue
+                time_to_merge_list.append(time_in_seconds)
+
+            except Exception as e:
+                skipped_prs += 1
+                logging.error("Something went wront when calculating difference: %s", e)
+
+    if len(time_to_merge_list) == 0:
+        logging.info("%s has 0 PRs", repo)
+    else:
+        average_time_to_merge = sum(time_to_merge_list) / len(time_to_merge_list)
+        logging.info(
+            "The average time to merge a PR in %s is %s seconds",
+            repo,
+            average_time_to_merge,
+        )
+        logging.info("Skipped PRs: %s", skipped_prs)
+
+    return average_time_to_merge
+
+
 def main() -> None:
     """
     The main function of the script that retrieves the GitHub token from the environment,
     starts the Prometheus HTTP server, and continuously retrieves pull request data from the
     specified repositories. Lastly, it sleeps for an hour before repeating the process.
     """
+    parser = argparse.ArgumentParser(
+        description="Set the logging level via command line"
+    )
+    parser.add_argument(
+        "--log",
+        "--log-level",
+        dest="log_level",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        default="WARNING",
+        help="Set the logging level",
+    )
+    args, _unknown = parser.parse_known_args()
+    logging.getLogger().setLevel(getattr(logging, args.log_level))
+
     token = os.getenv("GITHUB_TOKEN")
     if not token:
         raise RuntimeError("GITHUB_TOKEN environment variable not found.")
@@ -107,10 +179,22 @@ def main() -> None:
     while True:
 
         for repo in stfc_repositiories:
+            # Initial API call to retrieve and simplify list of Pull Requests in the repo
             list_of_prs = retrieve_list_of_prs(token=token, repo=repo)
             merged_prs_list = retrieve_all_merged_prs(list_of_prs)
-            merged_pr_total.labels(repository=repo).set(len(merged_prs_list))
 
+            # Metric calculations
+            average_time_to_merge_pr_per_repo = average_time_to_merge(
+                merged_prs_list, repo=repo
+            )
+            print(f"TESTING: {average_time_to_merge_pr_per_repo}")
+            # Prometheus gauge post to http server
+            average_time_to_merge_pr_gauge.labels(repository=repo).set(
+                average_time_to_merge_pr_per_repo
+            )
+            merged_pr_total_gauge.labels(repository=repo).set(len(merged_prs_list))
+
+        # Sleep for 1 hour
         time.sleep(3600)
 
 
