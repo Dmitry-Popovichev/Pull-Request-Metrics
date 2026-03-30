@@ -25,13 +25,13 @@ logging.basicConfig(
     datefmt="%d-%m-%Y %H:%M:%S",
 )
 
-# Defining a Prometheus Gauge to track the total number of merged PRs per repository
+# Defining a Prometheus Gauge to track the total number of merged PRs per repository.
 merged_pr_total_gauge = Gauge(
     name="github_merged_prs_total",
     documentation="Total number of merged pull requests",
     labelnames=["repository"],
 )
-# Defining a Prometheus Gauge to track the average time to merge PRs within a repository
+# Defining a Prometheus Gauge to track the average time to merge PRs within a repository.
 average_time_to_merge_pr_gauge = Gauge(
     name="average_time_to_merge_pr",
     documentation="The average time to merge a pull request from creation",
@@ -152,6 +152,9 @@ def average_time_to_merge(merged_prs: List[PullRequest], repo: str) -> float:
 
 def main() -> None:
     """
+    Arguments parser sits here as it was interfering with command flags in the terminal
+    when it was in the main body of the script. Allows for log-level command flags.
+
     The main function of the script that retrieves the GitHub token from the environment,
     starts the Prometheus HTTP server, and continuously retrieves pull request data from the
     specified repositories. Lastly, it sleeps for an hour before repeating the process.
@@ -179,15 +182,15 @@ def main() -> None:
     while True:
 
         for repo in stfc_repositiories:
-            # Initial API call to retrieve and simplify list of Pull Requests in the repo
+            # Initial API call to retrieve and simplify list of Pull Requests in the repo. Also total merged prs metric is here.
             list_of_prs = retrieve_list_of_prs(token=token, repo=repo)
             merged_prs_list = retrieve_all_merged_prs(list_of_prs)
 
-            # Metric calculations
+            # Metric calculations (there will be more)
             average_time_to_merge_pr_per_repo = average_time_to_merge(
                 merged_prs_list, repo=repo
             )
-            print(f"TESTING: {average_time_to_merge_pr_per_repo}")
+
             # Prometheus gauge post to http server
             average_time_to_merge_pr_gauge.labels(repository=repo).set(
                 average_time_to_merge_pr_per_repo
