@@ -1,0 +1,7 @@
+[report]
+omit =
+    tests/*
+exclude_lines =
+    start_http_server
+    while True:
+    if __name__ == "__main__":
