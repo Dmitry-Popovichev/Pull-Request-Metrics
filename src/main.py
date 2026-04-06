@@ -37,7 +37,7 @@ average_time_to_merge_pr_gauge = Gauge(
     documentation="The average time to merge a pull request from creation",
     labelnames=["repository"],
 )
-# Defining a Prometheus Gauge to track the average time to firs review within a repository.
+# Defining a Prometheus Gauge to track the average time to first review within a repository.
 average_time_to_first_review_gauge = Gauge(
     name="average_time_to_first_review",
     documentation="The average time to the first review within a repository",
@@ -202,8 +202,9 @@ def average_time_to_first_review(merged_prs: List[PullRequest], repo: str):
         except Exception as e:
             skipped_prs += 1
             logging.error("Something went wront when calculating difference: %s", e)
+            continue
 
-    if len(time_to_first_review_list) == 0:
+    if not time_to_first_review_list:
         logging.info("%s has 0 PRs or 0 reviews in any of the PRs", repo)
     else:
         avg_time_to_first_review = sum(time_to_first_review_list) / len(
