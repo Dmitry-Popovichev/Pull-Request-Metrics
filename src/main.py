@@ -43,6 +43,12 @@ average_time_to_first_review_gauge = Gauge(
     documentation="The average time to the first review within a repository",
     labelnames=["repository"],
 )
+# Defining a Prometheus Gauge to track the average lines changed within a repository.
+average_lines_changed_gauge = Gauge(
+    name="average_lines_changed",
+    documentation="The average number of lines changed within a repository",
+    labelnames=["repository"],
+)
 
 
 def retrieve_list_of_prs(token: str, repo: str) -> PaginatedList[PullRequest]:
@@ -117,7 +123,7 @@ def average_time_to_merge(merged_prs: List[PullRequest], repo: str) -> float:
 
         if created_at is None or merged_at is None:
             skipped_prs += 1
-            logging.warning(
+            logging.debug(
                 "Skipping pr #%s in %s due to missing datestamps (created_at=%s, merged_at=%s)",
                 pr_number,
                 repo,
@@ -130,7 +136,7 @@ def average_time_to_merge(merged_prs: List[PullRequest], repo: str) -> float:
                 time_in_seconds = difference.total_seconds()
                 if time_in_seconds < 0:
                     skipped_prs += 1
-                    logging.error(
+                    logging.debug(
                         "Skipping pr #%s as it has produced a negative difference, %s seconds",
                         pr_number,
                         time_in_seconds,
@@ -156,7 +162,7 @@ def average_time_to_merge(merged_prs: List[PullRequest], repo: str) -> float:
     return avg_time_to_merge
 
 
-def average_time_to_first_review(merged_prs: List[PullRequest], repo: str):
+def average_time_to_first_review(merged_prs: List[PullRequest], repo: str) -> float:
     """
     This function gets the average time from PR creation to the first review using the
     "get_reviews" method. This produces another paginated list which we have to iterate
@@ -165,7 +171,7 @@ def average_time_to_first_review(merged_prs: List[PullRequest], repo: str):
 
     :param merged_prs: A list of merged PRs.
     :param repo: A string containing the repository name.
-    :return: Average time to first review float per repository in seconds.
+    :return: Average time to first review float per repository in seconds as a float.
     """
 
     avg_time_to_first_review = 0.0
@@ -180,7 +186,7 @@ def average_time_to_first_review(merged_prs: List[PullRequest], repo: str):
 
         reviews = list(pr.get_reviews())
         if not reviews or not reviews[0].submitted_at:
-            logging.info("No reviews were found in PR #%s", pr_number)
+            logging.debug("No reviews were found in PR #%s", pr_number)
             skipped_prs += 1
             continue
         first_review_date = reviews[0].submitted_at
@@ -190,7 +196,7 @@ def average_time_to_first_review(merged_prs: List[PullRequest], repo: str):
             time_in_seconds = difference.total_seconds()
             if time_in_seconds < 0:
                 skipped_prs += 1
-                logging.info(
+                logging.debug(
                     "Skipping pr #%s as it has produced a negative difference, %s seconds",
                     pr_number,
                     time_in_seconds,
@@ -220,6 +226,49 @@ def average_time_to_first_review(merged_prs: List[PullRequest], repo: str):
     return avg_time_to_first_review
 
 
+def average_number_of_lines_changed(merged_prs: List[PullRequest], repo: str) -> float:
+    """
+    A funtion that calculates the number of lines changed in a PR using the files method.
+    This again produces a paginated list that we have to iterate through. Another slow
+    function.
+
+    :param merged_prs: A list of merged PRs.
+    :param repo: A string containing the repository name.
+    :return: Average number of lines changed in a repo in seconds as a float.
+    """
+
+    changed_files = []
+    total_lines_changed_list = []
+    total_lines_changed_in_pr = 0
+    avg_number_of_lines_changed = 0.0
+
+    for pr in merged_prs:
+        pr_number = getattr(pr, "number", "unknown")
+
+        changed_files = pr.get_files()
+        if not changed_files:
+            logging.debug("PR #%s has no changed files", pr_number)
+            continue
+
+        for file in changed_files:
+            total_lines_changed_in_pr += file.changes
+
+        total_lines_changed_list.append(total_lines_changed_in_pr)
+        total_lines_changed_in_pr = 0
+
+    if not total_lines_changed_list:
+        logging.info("%s has 0 PRs or 0 files changed in any of the PRs", repo)
+    else:
+        avg_number_of_lines_changed = sum(total_lines_changed_list) / len(
+            total_lines_changed_list
+        )
+        logging.info(
+            "Average lines changed in %s is: %s", repo, avg_number_of_lines_changed
+        )
+
+    return avg_number_of_lines_changed
+
+
 def main() -> None:
     """
     Arguments parser sits here as it was interfering with command flags in the terminal
@@ -238,7 +287,7 @@ def main() -> None:
         "--log-level",
         dest="log_level",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        default="WARNING",
+        default="INFO",
         help="Set the logging level",
     )
     args, _unknown = parser.parse_known_args()
@@ -265,6 +314,9 @@ def main() -> None:
             average_time_to_merge_pr_per_repo = average_time_to_merge(
                 merged_prs_list, repo=repo
             )
+            average_lines_changed_per_repo = average_number_of_lines_changed(
+                merged_prs_list, repo=repo
+            )
 
             # Prometheus gauge post to http server
             merged_pr_total_gauge.labels(repository=repo).set(len(merged_prs_list))
@@ -273,6 +325,9 @@ def main() -> None:
             )
             average_time_to_first_review_gauge.labels(repository=repo).set(
                 avereage_time_to_first_review_per_repo
+            )
+            average_lines_changed_gauge.labels(repository=repo).set(
+                average_lines_changed_per_repo
             )
 
         # Sleep for 1 hour
