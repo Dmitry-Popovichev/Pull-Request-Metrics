@@ -250,8 +250,7 @@ def average_number_of_lines_changed(merged_prs: List[PullRequest], repo: str) ->
             logging.debug("PR #%s has no changed files", pr_number)
             continue
 
-        for file in changed_files:
-            total_lines_changed_in_pr += file.changes
+        total_lines_changed_in_pr = sum(file.changes for file in changed_files)
 
         total_lines_changed_list.append(total_lines_changed_in_pr)
         total_lines_changed_in_pr = 0
