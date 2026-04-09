@@ -12,6 +12,7 @@ from src.main import retrieve_list_of_prs
 from src.main import retrieve_all_merged_prs
 from src.main import average_time_to_merge
 from src.main import average_time_to_first_review
+from src.main import average_number_of_lines_changed
 from src.main import main
 
 
@@ -102,7 +103,7 @@ def test_average_time_to_merge_returns_a_positive_float():
     assert isinstance(result, float) and result > 0, "Should return a postive float"
 
 
-def test_pr_datetime_has_None_value_and_skips_and_logs_warning(caplog):
+def test_pr_datetime_has_None_value_and_skips_and_logs_a_message(caplog):
 
     mock_repo_name = "The best repo ever"
 
@@ -115,18 +116,19 @@ def test_pr_datetime_has_None_value_and_skips_and_logs_warning(caplog):
 
     list_of_prs = [mock_pr1]
 
-    with caplog.at_level(logging.WARNING):
+    with caplog.at_level(logging.DEBUG):
         result = average_time_to_merge(list_of_prs, mock_repo_name)
 
-    assert len(caplog.records) == 1, "There should be 1 record of a warning"
+    assert len(caplog.records) == 2, "There should be 2 records of a error"
     assert (
         "Skipping pr #1 in The best repo ever due to missing datestamps (created_at=2026-03-24 15:02:03+00:00, merged_at=None)"
         in caplog.text
     )
+    assert ("The best repo ever has 0 PRs") in caplog.text
     assert result == 0
 
 
-def test_if_difference_is_negative_then_function_should_log_an_error(caplog):
+def test_if_difference_is_negative_then_function_should_log_a_message(caplog):
 
     mock_repo_name = "The best repo ever"
 
@@ -141,14 +143,15 @@ def test_if_difference_is_negative_then_function_should_log_an_error(caplog):
 
     list_of_prs = [mock_pr1]
 
-    with caplog.at_level(logging.ERROR):
+    with caplog.at_level(logging.DEBUG):
         result = average_time_to_merge(list_of_prs, mock_repo_name)
 
-    assert len(caplog.records) == 1, "There should be 1 record of an error"
+    assert len(caplog.records) == 2, "There should be 2 records of an error"
     assert (
         "Skipping pr #1 as it has produced a negative difference, -387.0 seconds"
         in caplog.text
     )
+    assert ("The best repo ever has 0 PRs") in caplog.text
     assert result == 0
 
 
@@ -170,7 +173,7 @@ def test_when_datetime_has_missing_timezone_and_exception_is_thrown_with_error_l
     with caplog.at_level(logging.ERROR):
         result = average_time_to_merge(list_of_prs, mock_repo_name)
 
-    assert len(caplog.records) == 1
+    assert len(caplog.records) == 1, "There should be 1 logging record"
     assert "Something went wront when calculating difference" in caplog.text
     assert result == 0
 
@@ -217,10 +220,10 @@ def test_no_reviews_were_found_and_logging_info_messages_are_captured(caplog):
     mock_pr1.get_reviews.return_value = []
 
     list_of_prs = [mock_pr1]
-    with caplog.at_level(logging.INFO):
+    with caplog.at_level(logging.DEBUG):
         result = average_time_to_first_review(list_of_prs, mock_repo_name)
 
-    assert len(caplog.records) == 3
+    assert len(caplog.records) == 3, "There should be 3 logging records"
     assert "No reviews were found in PR #1" in caplog.text
     assert "The best repo ever has 0 PRs or 0 reviews in any of the PRs" in caplog.text
     assert "Skipped PRs: 1" in caplog.text
@@ -254,7 +257,7 @@ def test_one_review_object_has_a_valid_date_and_one_has_None_value_and_logging_i
     with caplog.at_level(logging.INFO):
         result = average_time_to_first_review(list_of_prs, mock_repo_name)
 
-    assert len(caplog.records) == 2
+    assert len(caplog.records) == 2, "There should be 2 logging records"
     assert (
         "The average time to first review in The best repo ever is 500951.0 seconds"
         in caplog.text
@@ -283,7 +286,7 @@ def test_submitted_at_date_is_None_and_logging_messages_are_captured(caplog):
     mock_pr1.get_reviews.return_value = [mock_review_1]
 
     list_of_prs = [mock_pr1]
-    with caplog.at_level(logging.INFO):
+    with caplog.at_level(logging.DEBUG):
         result = average_time_to_first_review(list_of_prs, mock_repo_name)
 
     assert len(caplog.records) == 3
@@ -315,7 +318,7 @@ def test_that_time_to_review_is_negative_and_logging_messages_are_captured(caplo
     list_of_prs = [mock_pr1]
 
     list_of_prs = [mock_pr1]
-    with caplog.at_level(logging.INFO):
+    with caplog.at_level(logging.DEBUG):
         result = average_time_to_first_review(list_of_prs, mock_repo_name)
 
     assert len(caplog.records) == 3
@@ -354,9 +357,61 @@ def test_Exception_is_raised_after_difference_calculation_fails(caplog):
 
     assert len(caplog.records) == 3
     assert "Something went wront when calculating difference:" in caplog.text
-    assert "The best repo ever has 0 PRs or 0 reviews in any of the PRs"
+    assert "The best repo ever has 0 PRs or 0 reviews in any of the PRs" in caplog.text
     assert "Skipped PRs: 1" in caplog.text
     assert result == 0
+
+
+def test_average_number_of_lines_function_produces_a_positive_float(caplog):
+    """
+    A test the tests the average number of lines function works normally
+    and produces a positive float.
+    """
+
+    mock_repo_name = "The best repo ever"
+
+    mock_pr = MagicMock()
+    mock_pr.number = 1
+
+    mock_changed_files = MagicMock()
+    mock_changed_files.changes = 66
+
+    mock_pr.get_files.return_value = [mock_changed_files]
+
+    list_of_prs = [mock_pr]
+
+    with caplog.at_level(logging.DEBUG):
+        result = average_number_of_lines_changed(list_of_prs, mock_repo_name)
+
+    assert result == 66.0
+    assert isinstance(result, float) and result > 0, "Should return a postive float"
+
+
+def test_that_pr_has_no_changed_files_and_logging_messages_are_captured(caplog):
+    """
+    A function that tests a pr that has no files changed and a logging message is
+    produced and captured.
+    """
+
+    mock_repo_name = "The best repo ever"
+
+    mock_pr = MagicMock()
+    mock_pr.number = 1
+
+    mock_pr.get_files.return_value = []
+
+    list_of_prs = [mock_pr]
+
+    with caplog.at_level(logging.DEBUG):
+        result = average_number_of_lines_changed(list_of_prs, mock_repo_name)
+
+    assert len(caplog.records) == 2, "There should be 2 logging messages"
+    assert "PR #1 has no changed files" in caplog.text
+    assert (
+        "The best repo ever has 0 PRs or 0 files changed in any of the PRs"
+        in caplog.text
+    )
+    assert result == 0.0
 
 
 @patch("src.main.logging.getLogger")
