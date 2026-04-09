@@ -78,6 +78,7 @@ def retrieve_list_of_prs(token: str, repo: str) -> PaginatedList[PullRequest]:
 
 def retrieve_all_merged_prs(
     list_of_prs: PaginatedList[PullRequest],
+    repo: str,
 ) -> List[PullRequest]:
     """
     A simple function that retrieves all pull requests from the given repository and creates a new
@@ -85,6 +86,7 @@ def retrieve_all_merged_prs(
     iterate through into a simple list of merged PRs.
 
     :param list_of_prs: a paginated list of PRs.
+    :param repo: A string containing the repository name.
     :return: A list of merged PRs.
     """
 
@@ -98,7 +100,7 @@ def retrieve_all_merged_prs(
         else:
             logging.debug("PR has none value for merged field")
 
-    logging.info("Total merged PRs: %s", len(merged_prs))
+    logging.info("%s has a total of %s merged PRs", repo, len(merged_prs))
     return merged_prs
 
 
@@ -304,7 +306,7 @@ def main() -> None:
             # Initial API call to retrieve and simplify list of Pull Requests in the repo.
             # Also total merged prs metric is here.
             list_of_prs = retrieve_list_of_prs(token=token, repo=repo)
-            merged_prs_list = retrieve_all_merged_prs(list_of_prs)
+            merged_prs_list = retrieve_all_merged_prs(list_of_prs, repo=repo)
 
             # Metric calculations (there will be more)
             avereage_time_to_first_review_per_repo = average_time_to_first_review(
@@ -316,6 +318,7 @@ def main() -> None:
             average_lines_changed_per_repo = average_number_of_lines_changed(
                 merged_prs_list, repo=repo
             )
+            logging.info("------------------------------------------------------------")
 
             # Prometheus gauge post to http server
             merged_pr_total_gauge.labels(repository=repo).set(len(merged_prs_list))
@@ -329,6 +332,9 @@ def main() -> None:
                 average_lines_changed_per_repo
             )
 
+        logging.info(
+            "The exporter is taking a nap for an hour, it's been exporting for a while now..."
+        )
         # Sleep for 1 hour
         time.sleep(3600)
 
