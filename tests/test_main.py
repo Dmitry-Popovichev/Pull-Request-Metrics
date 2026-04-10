@@ -66,6 +66,8 @@ def test_retrieve_all_merged_function_returns_only_merged_prs():
     Test that retrieve_all_merged returns only merged PRs.
     """
 
+    mock_repo_name = "The best repo ever"
+
     mock_pr1 = MagicMock()
     mock_pr1.merged = True
 
@@ -77,7 +79,7 @@ def test_retrieve_all_merged_function_returns_only_merged_prs():
 
     list_of_prs = [mock_pr1, mock_pr2, mock_pr3]
 
-    result = retrieve_all_merged_prs(list_of_prs)
+    result = retrieve_all_merged_prs(list_of_prs, mock_repo_name)
 
     assert isinstance(result, list), "Should return a list"
     assert len(result) == 1, "Should have exactly one merged PR"
