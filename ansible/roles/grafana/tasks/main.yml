@@ -6,7 +6,7 @@
       - apt-transport-https
       - wget
       - gnupg
-    state: present
+    state: latest
     update_cache: true
 
 - name: "Add Grafana GPG key"
@@ -26,7 +26,7 @@
   ansible.builtin.apt:
     name:
       - grafana
-    state: present
+    state: latest
     update_cache: true
 
 - name: "Enable and start the Grafana Service"

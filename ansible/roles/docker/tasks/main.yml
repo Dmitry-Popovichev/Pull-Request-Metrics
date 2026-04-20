@@ -1,13 +1,14 @@
 ---
-# tasks file for docker
 - name: 'install docker dependecies'
   become: true
   apt:
     name: '{{ item }}'
-    state: 'present'
+    state: 'latest'
+    update_cache: true
   with_items:
     - 'apt-transport-https'
     - 'ca-certificates'
+
 
 - name: 'add docker repo apt key'
   become: true
