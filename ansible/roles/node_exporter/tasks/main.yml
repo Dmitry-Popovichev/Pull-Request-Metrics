@@ -1,0 +1,59 @@
+---
+- name: Create prometheus group
+  become: true
+  ansible.builtin.group:
+    name: prometheus
+    state: present
+
+- name: Create prometheus user
+  become: true
+  ansible.builtin.user:
+    name: prometheus
+    group: prometheus
+    shell: /usr/sbin/nologin
+    system: true
+    state: present
+
+- name: Download and unarchive node_exporter
+  ansible.builtin.unarchive:
+    src: "https://github.com/prometheus/node_exporter/releases/\
+      download/v1.7.0/node_exporter-1.7.0.linux-amd64.tar.gz"
+    dest: /tmp
+    remote_src: true
+
+- name: Copy binary to /usr/local/bin
+  become: true
+  ansible.builtin.copy:
+    src: "/tmp/node_exporter-1.7.0.linux-amd64/node_exporter"
+    dest: "/usr/local/bin/node_exporter"
+    mode: "0755"
+    owner: prometheus
+    group: prometheus
+    remote_src: true
+
+- name: Create node_dexporter.service service file
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/node_exporter.service
+    content: |
+      [Unit]
+      Description=Node Exporter
+      Wants=network-online.target
+      After=network-online.target
+
+      [Service]
+      User=prometheus
+      Group=prometheus
+      Type=simple
+      ExecStart=/usr/local/bin/node_exporter
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Ensure node_exporter is started and enabled
+  become: true
+  ansible.builtin.systemd:
+    name: node_exporter
+    state: started
+    enabled: true
+    daemon_reload: true
