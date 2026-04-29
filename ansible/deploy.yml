@@ -17,3 +17,9 @@
     - grafana
   tags:
     - grafana
+
+- hosts: exporter, prometheus, grafana
+  roles:
+    - node_exporter
+  tags:
+    - node_exporter
