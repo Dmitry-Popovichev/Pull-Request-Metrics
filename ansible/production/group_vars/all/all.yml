@@ -1,0 +1,5 @@
+---
+exporter_host: "172.16.111.42"
+exporter_port: "8081"
+grafana_host: "172.16.111.107"
+prometheus_host: "172.16.102.188"
