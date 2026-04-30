@@ -13,6 +13,8 @@
     - prom
 
 - hosts: grafana
+  vars_files:
+    - secrets.yml
   roles:
     - grafana
   tags:

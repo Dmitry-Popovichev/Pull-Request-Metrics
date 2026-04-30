@@ -29,6 +29,23 @@
     state: latest
     update_cache: true
 
+- name: "Load Pull Request Dashboards"
+  grafana.grafana.dashboard:
+    grafana_url: "http://{{ grafana_host }}:3000"
+    dashboard: "{{ lookup('ansible.builtin.file', \
+      'pr_metrics_dashboard.json') | from_json }}"
+    grafana_api_key: "{{ grafana_api_key }}"
+    state: present
+
+- name: "Load Health Check Dashboards"
+  grafana.grafana.dashboard:
+    dashboard: "{{ lookup('ansible.builtin.file', \
+      'health_check_dashboard.json') }}"
+    grafana_url: "http://{{ grafana_host }}:3000"
+    grafana_api_key: "{{ grafana_api_key }}"
+    state: present
+
+
 - name: "Enable and start the Grafana Service"
   become: true
   ansible.builtin.service:
