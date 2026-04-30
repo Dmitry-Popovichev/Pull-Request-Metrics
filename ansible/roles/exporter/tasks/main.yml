@@ -29,6 +29,7 @@
 
 - name: Load in variable files
   ansible.builtin.include_vars: "{{ vars_file }}"
+  no_log: true
 
 - name: Create a local config file with the token
   become: true
@@ -38,6 +39,7 @@
     owner: exporter_user
     group: exporter_user
     mode: '0600'
+  no_log: true
 
 - name: Build the Docker image for the exporter
   become: true
@@ -61,3 +63,4 @@
     restart_policy: always
     env:
       GITHUB_TOKEN: "{{ github_token }}"
+  no_log: true
