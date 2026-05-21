@@ -3,6 +3,7 @@ A python module that contains variables and constants used across the project.
 """
 
 stfc_repositiories = [
+    "stfc/cloud-gatus-status"
     "stfc/cloud-azimuth-config",
     "stfc/cloud-capi-values",
     "stfc/cloud-deployed-apps",
