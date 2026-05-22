@@ -163,6 +163,7 @@ def average_time_to_merge(merged_prs: List[PullRequest], repo: str) -> float:
 
     return avg_time_to_merge
 
+
 def average_time_to_first_review(merged_prs: List[PullRequest], repo: str) -> float:
     """
     This function gets the average time from PR creation to the first review using the

@@ -35,7 +35,7 @@ def test_retrieve_list_of_prs_function_returns_list(mock_github, _mock_auth):
     result = retrieve_list_of_prs("mock_token", "mock_repo")
 
     assert isinstance(result, list), "Should return a list"
-    assert len(result) == 2, "Should have exactly one PR"
+    assert len(result) == 1, "Should have exactly one PR"
     assert result[0] == mock_pr, "The PR should match the mock"
 
 
