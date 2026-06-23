@@ -6,7 +6,7 @@ jobs:
     name: runner / black formatter
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       
       # Use the official PSF action instead of the rickstaa one
       - uses: psf/black@stable
